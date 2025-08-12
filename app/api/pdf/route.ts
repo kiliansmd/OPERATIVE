@@ -19,7 +19,7 @@ async function launchBrowser(isServerless: boolean) {
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
-      headless: true,
+      headless: chromium.headless,
     })
   }
 
@@ -60,7 +60,14 @@ export async function GET(req: Request) {
     const urlBase = getBaseUrl(req)
     const target = new URL(path, urlBase).toString()
 
-    const isServerless = !!process.env.AWS_REGION || !!process.env.LAMBDA_TASK_ROOT || process.env.VERCEL === "1"
+    const isServerless =
+      process.env.NODE_ENV === "production" ||
+      process.env.VERCEL === "1" ||
+      !!process.env.AWS_REGION ||
+      !!process.env.LAMBDA_TASK_ROOT ||
+      !!process.env.RAILWAY_STATIC_URL ||
+      !!process.env.RAILWAY_ENVIRONMENT ||
+      !!process.env.RAILWAY_PROJECT_ID
 
     const browser = await launchBrowser(isServerless)
     const page = await browser.newPage()
