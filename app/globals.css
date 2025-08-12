@@ -84,6 +84,22 @@ body {
     print-color-adjust: exact;
   }
 
+  /* Problematische Effekte im Druck deaktivieren */
+  * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Transparente weiße Boxen in solide umwandeln */
+  [class*="bg-white/"], [class*="bg-white\\/"] {
+    background-color: rgba(255, 255, 255, 0.97) !important;
+    border-color: #e2e8f0 !important;
+  }
+
   /* Anpassungen für Schatten und Effekte */
   .shadow-lg,
   .shadow-md,

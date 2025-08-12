@@ -23,7 +23,7 @@ import {
   Layout,
   Calculator,
 } from "lucide-react"
-import SimplePDFExporter from "@/components/simple-pdf-exporter"
+import ServerPdfButton from "@/components/server-pdf-button"
 
 export const metadata: Metadata = {
   title: "Projektingenieur Sondermaschinenbau | B.Eng. | 8+ Jahre | MT",
@@ -217,10 +217,8 @@ export default function CandidateProfile() {
 
   return (
     <div className="min-h-screen bg-white font-sans" id="candidate-profile">
-      {/* Floating PDF Export Button (hidden in print) */}
-      <div className="no-print">
-        <SimplePDFExporter targetId="candidate-profile" filename="kandidatenprofil-mt.pdf" />
-      </div>
+      {/* Serverseitiger PDF-Export */}
+      <ServerPdfButton label="Als PDF exportieren" />
 
       {/* Cover Page */}
       <section className="relative min-h-[88vh] flex flex-col items-center justify-center p-8 bg-gradient-to-br from-[#282550] to-[#1a1a38] text-center overflow-hidden page-break-after">

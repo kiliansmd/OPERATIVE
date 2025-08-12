@@ -22,7 +22,7 @@ export default function SiteNav() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200">
+    <header className="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200 no-print">
       {/* Skip link */}
       <a
         href="#main"
