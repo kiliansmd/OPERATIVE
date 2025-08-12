@@ -8,18 +8,23 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Upload, FileText, X, Copy, Download } from 'lucide-react'
+import type { CandidateProfile } from "@/lib/schema"
 
 type IngestResponse = {
   ok: boolean
-  data?: unknown
+  data?: CandidateProfile
   error?: string
 }
 
-export default function UploadIngest() {
+type Props = {
+  onResult?: (data: CandidateProfile) => void
+}
+
+export default function UploadIngest({ onResult }: Props) {
   const [files, setFiles] = useState<File[]>([])
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<unknown | null>(null)
+  const [result, setResult] = useState<CandidateProfile | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const onDrop = useCallback((ev: React.DragEvent<HTMLDivElement>) => {
@@ -62,9 +67,11 @@ export default function UploadIngest() {
       if (!json.ok) {
         throw new Error(json.error || "Unbekannter Fehler")
       }
-      setResult(json.data ?? null)
+      const data = json.data ?? null
+      setResult(data)
+      if (data && onResult) onResult(data)
     } catch (err: any) {
-      setResult({ error: err?.message || "Fehler bei der Verarbeitung" })
+      setResult({ title: "Fehler", profileSummary: [err?.message || "Fehler bei der Verarbeitung"] })
     } finally {
       setLoading(false)
     }

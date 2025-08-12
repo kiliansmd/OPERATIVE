@@ -59,6 +59,7 @@ export default function SimplePDFExporter({ targetId, filename = "kandidatenprof
 
       // PDF-optimierte Styles anwenden
       document.body.style.overflow = "hidden"
+      document.body.classList.add("pdf-processing")
       element.style.width = "1200px"
       element.style.margin = "0"
       element.style.padding = "0"
@@ -122,6 +123,65 @@ export default function SimplePDFExporter({ targetId, filename = "kandidatenprof
         if (el.style.background && el.style.background.includes("rgba")) {
           el.style.background = "white"
         }
+      }
+
+      // Hilfsfunktionen: Farbhelligkeit berechnen und Textkontrast erzwingen
+      const parseRGB = (color: string): { r: number; g: number; b: number; a: number } | null => {
+        if (!color) return null
+        if (color.startsWith("rgb")) {
+          const nums = color.match(/\d+\.?\d*/g)
+          if (!nums || nums.length < 3) return null
+          const [r, g, b, a] = nums.map((n) => Number.parseFloat(n))
+          return { r, g, b, a: a ?? 1 }
+        }
+        return null
+      }
+      const luminance = (rgb: { r: number; g: number; b: number }) => 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b
+      const getEffectiveBg = (node: HTMLElement): string => {
+        let el: HTMLElement | null = node
+        // Suche aufwärts bis nicht-transparent
+        while (el) {
+          const cs = window.getComputedStyle(el)
+          const c = cs.backgroundColor
+          const p = parseRGB(c)
+          if (c && c !== "transparent" && p && p.a > 0 && !(p.r === 0 && p.g === 0 && p.b === 0 && p.a === 0)) {
+            return c
+          }
+          el = el.parentElement
+        }
+        return "rgb(255,255,255)"
+      }
+      const ensureReadableTextContrast = () => {
+        const textNodes = element.querySelectorAll(
+          "a, p, span, li, small, strong, em, h1, h2, h3, h4, h5, h6"
+        )
+        textNodes.forEach((n) => {
+          if (!(n instanceof HTMLElement)) return
+          const bg = getEffectiveBg(n)
+          const rgb = parseRGB(bg)
+          if (!rgb) return
+          const Y = luminance(rgb)
+          // Dunkler Hintergrund → Text weiß, Heller Hintergrund → sehr dunkler Text
+          if (Y < 130) {
+            n.style.color = "#ffffff"
+            if (n.tagName === "A") (n as HTMLAnchorElement).style.textDecoration = "underline"
+          } else {
+            n.style.color = "#0f172a" // slate-900
+          }
+        })
+        // SVGs anpassen
+        const svgs = element.querySelectorAll("svg")
+        svgs.forEach((svg) => {
+          if (!(svg instanceof HTMLElement)) return
+          const bg = getEffectiveBg(svg)
+          const rgb = parseRGB(bg)
+          if (!rgb) return
+          const Y = luminance(rgb)
+          const color = Y < 130 ? "#ffffff" : "#0f172a"
+          svg.style.color = color
+          svg.style.fill = color
+          svg.style.stroke = color
+        })
       }
 
       // Alle Elemente durchgehen und problematische Styles entfernen
@@ -216,6 +276,25 @@ export default function SimplePDFExporter({ targetId, filename = "kandidatenprof
           }
         }
       })
+
+      // Footer als dunklen Bereich behandeln
+      const footer = element.querySelector("footer") as HTMLElement | null
+      if (footer) {
+        footer.style.background = "linear-gradient(135deg, #282550 0%, #1a1a38 100%)"
+        const footerNodes = footer.querySelectorAll("*, a")
+        footerNodes.forEach((n) => {
+          if (n instanceof HTMLElement) {
+            n.style.color = "#ffffff"
+            if (n.tagName === "A") (n as HTMLAnchorElement).style.textDecoration = "underline"
+            if (n.tagName.toLowerCase() === "svg") {
+              n.style.fill = "#ffffff"; n.style.stroke = "#ffffff"; n.style.color = "#ffffff"
+            }
+          }
+        })
+      }
+
+      // Kontrast global sicherstellen (nachdem Hintergründe feststehen)
+      ensureReadableTextContrast()
 
       // Alle Karten und Container sicher machen
       const cardElements = element.querySelectorAll(".bg-white, [class*='rounded'], [class*='shadow']")
@@ -366,6 +445,7 @@ export default function SimplePDFExporter({ targetId, filename = "kandidatenprof
       // Styles wiederherstellen und Sanitizer entfernen
       element.style.cssText = originalStyles.element
       document.body.style.cssText = originalStyles.body
+      document.body.classList.remove("pdf-processing")
       if (sanitizerStyle.parentNode) sanitizerStyle.parentNode.removeChild(sanitizerStyle)
       window.scrollTo(0, originalScrollPos)
 

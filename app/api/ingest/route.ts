@@ -7,9 +7,10 @@ export async function POST(req: Request) {
     const form = await req.formData()
     const notes = (form.get("notes") as string) || ""
 
-    const files: File[] = []
+    const files: any[] = []
     for (const [key, value] of form.entries()) {
-      if (key === "files" && value instanceof File) {
+      // In Node-App-Route ist 'File' nicht global typisiert → duck-typing:
+      if (key === "files" && value && typeof (value as any).arrayBuffer === "function") {
         files.push(value)
       }
     }
@@ -49,24 +50,17 @@ export async function POST(req: Request) {
           description: "Automatische Verarbeitung von Lebensläufen und Unterlagen.",
         },
       ],
-      qualifications: [
-        "Dokumente erfolgreich verarbeitet",
-        "Weitere Analyse erforderlich",
-      ],
+      qualifications: ["Dokumente erfolgreich verarbeitet", "Weitere Analyse erforderlich"],
       personalDetails: [
         { label: "Verfügbarkeit", value: "Nach Absprache" },
         { label: "Standort", value: "Deutschlandweit" },
       ],
-      itSkills: [
-        { skill: "Dokumentenverarbeitung", level: "Automatisiert" },
-      ],
+      itSkills: [{ skill: "Dokumentenverarbeitung", level: "Automatisiert" }],
       languages: [
         { lang: "Deutsch", level: "Verhandlungssicher" },
         { lang: "Englisch", level: "Verhandlungssicher" },
       ],
-      education: [
-        "Ausbildung aus Dokumenten zu extrahieren",
-      ],
+      education: ["Ausbildung aus Dokumenten zu extrahieren"],
       keyProjects: [
         {
           id: "p1",
@@ -86,74 +80,57 @@ export async function POST(req: Request) {
         },
       ],
       careerGoals: [
-        {
-          title: "Detaillierte Analyse",
-          description: "Weitere Analyse der Dokumente für vollständiges Profil.",
-        },
+        { title: "Detaillierte Analyse", description: "Weitere Analyse der Dokumente für vollständiges Profil." },
       ],
-      interests: [
-        { name: "Dokumentenverarbeitung" },
-      ],
-      personalityTraits: [
-        "Profil basierend auf Dokumenten erstellt",
-      ],
-      motivationFactors: [
-        "Weitere Analyse der Unterlagen erforderlich",
-      ],
+      interests: [{ name: "Dokumentenverarbeitung" }],
+      personalityTraits: ["Profil basierend auf Dokumenten erstellt"],
+      motivationFactors: ["Weitere Analyse der Unterlagen erforderlich"],
     }
 
-    return NextResponse.json({ 
-      ok: true, 
+    return NextResponse.json({
+      ok: true,
       data: fallbackProfile,
       message: "Dokumente erfolgreich verarbeitet. Für detaillierte Analyse kontaktieren Sie unser Team.",
-      extractedTextLength: combinedText.length
+      extractedTextLength: combinedText.length,
     })
-
   } catch (e: any) {
     console.error("API Error:", e)
-    return NextResponse.json({ 
-      ok: false, 
-      error: "Interner Fehler bei der Dokumentenverarbeitung" 
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Interner Fehler bei der Dokumentenverarbeitung",
+      },
+      { status: 500 }
+    )
   }
 }
 
 // Vereinfachte Text-Extraktion
-async function extractTextFromFiles(files: File[]): Promise<Array<{name: string, mime: string, text: string}>> {
-  const out: Array<{name: string, mime: string, text: string}> = []
-  
+async function extractTextFromFiles(files: any[]): Promise<Array<{ name: string; mime: string; text: string }>> {
+  const out: Array<{ name: string; mime: string; text: string }> = []
+
   for (const f of files) {
     try {
-      const mime = (f.type || "").toLowerCase()
+      const name = (f as any).name || "unbekannt"
+      const type = (f as any).type || "application/octet-stream"
+      const textFn = (f as any).text as undefined | (() => Promise<string>)
+      const lower = String(name).toLowerCase()
       let text = ""
-      
-      // Einfache Text-Extraktion ohne externe Bibliotheken
-      if (mime.startsWith("text/") || 
-          f.name.toLowerCase().endsWith(".txt") || 
-          f.name.toLowerCase().endsWith(".md")) {
-        text = await f.text()
+
+      if (typeof textFn === "function" && (type.startsWith("text/") || lower.endsWith(".txt") || lower.endsWith(".md") || lower.endsWith(".markdown"))) {
+        text = await textFn.call(f)
       } else {
-        // Für andere Dateitypen: Basis-Informationen
-        text = `Datei: ${f.name}\nTyp: ${f.type || 'unbekannt'}\nGröße: ${f.size} Bytes\n\nFür detaillierte Analyse kontaktieren Sie unser Team.`
+        text = `Datei: ${name}\nTyp: ${type}\n\nFür detaillierte Analyse kontaktieren Sie unser Team.`
       }
 
-      // Normalisiere und begrenze Text
       const normalized = text.replace(/\r/g, "").replace(/\t/g, "  ")
       const limited = normalized.length > 10000 ? normalized.slice(0, 10000) + "\n\n[Text gekürzt...]" : normalized
 
-      out.push({
-        name: f.name,
-        mime: f.type || "application/octet-stream",
-        text: limited,
-      })
+      out.push({ name, mime: type, text: limited })
     } catch (e) {
-      out.push({
-        name: f.name,
-        mime: f.type || "application/octet-stream",
-        text: `Fehler beim Lesen der Datei: ${e}`,
-      })
+      out.push({ name: "unbekannt", mime: "application/octet-stream", text: `Fehler beim Lesen der Datei: ${e}` })
     }
   }
-  
+
   return out
 }
