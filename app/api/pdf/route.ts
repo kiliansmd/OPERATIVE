@@ -56,6 +56,16 @@ async function launchBrowser(isServerless: boolean) {
     })
   }
 
+  // 4) Letzter Fallback: Puppeteer mit gebundeltem Chromium (wird beim Install geladen)
+  // Hinweis: Der dynamische Import von 'puppeteer' kann zur Buildzeit fehlen.
+  // Wir kapseln ihn in eval, damit TypeScript keine Typ-Resolution erzwingt.
+  try {
+    const dynamicImport: any = (eval("require") as any)("puppeteer")
+    if (dynamicImport?.launch) {
+      return await dynamicImport.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] })
+    }
+  } catch {}
+
   throw new Error(
     "Kein Chrome/Chromium gefunden. Installiere Chrome oder setze PUPPETEER_EXECUTABLE_PATH."
   )
