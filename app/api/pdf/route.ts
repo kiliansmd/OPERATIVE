@@ -14,10 +14,18 @@ function getBaseUrl(req: Request): string {
 }
 
 async function launchBrowser(isServerless: boolean) {
-  // 0) Fester Pfad via ENV hat Priorität
+  // 0) Fester Pfad via ENV hat Priorität (Railway Nixpacks)
   const envChrome = process.env.PUPPETEER_EXECUTABLE_PATH
   if (envChrome) {
-    return puppeteer.launch({ executablePath: envChrome, headless: true })
+    try {
+      return await puppeteer.launch({ 
+        executablePath: envChrome, 
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+      })
+    } catch (e: any) {
+      console.log("ENV Chrome failed, trying fallback:", e?.message || "Unknown error")
+    }
   }
 
   // 1) Bevorzugt systemweiten Chrome/Chromium nutzen (auch in Railway Production vorhanden)
