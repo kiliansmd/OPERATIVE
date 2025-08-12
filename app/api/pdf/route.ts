@@ -14,6 +14,12 @@ function getBaseUrl(req: Request): string {
 }
 
 async function launchBrowser(isServerless: boolean) {
+  // 0) Fester Pfad via ENV hat Priorität
+  const envChrome = process.env.PUPPETEER_EXECUTABLE_PATH
+  if (envChrome) {
+    return puppeteer.launch({ executablePath: envChrome, headless: true })
+  }
+
   // 1) Bevorzugt systemweiten Chrome/Chromium nutzen (auch in Railway Production vorhanden)
   try {
     return await puppeteer.launch({ channel: "chrome", headless: true })
