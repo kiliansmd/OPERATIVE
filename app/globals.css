@@ -1,0 +1,247 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* Druckoptimierungen */
+@page {
+  size: A4;
+  margin: 15mm 10mm; /* Standardränder für den Druck */
+}
+
+@media print {
+  /* Grundlegende Druckeinstellungen */
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    background: white !important;
+    font-size: 12pt;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    font-smooth: always;
+  }
+
+  /* Elemente ausblenden, die nicht gedruckt werden sollen */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Seitenumbrüche nach Hauptabschnitten */
+  .page-break-after {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  /* Keine Seitenumbrüche innerhalb dieser Elemente */
+  .keep-together {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Überschriften nicht am Ende einer Seite */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    line-height: 1.4;
+  }
+
+  /* Bilder und Tabellen nicht umbrechen */
+  img,
+  table,
+  figure {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Listen nicht am Anfang einer Seite umbrechen */
+  ul,
+  ol,
+  dl {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+
+  /* Hintergrundfarben und Bilder drucken */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Anpassungen für Schatten und Effekte */
+  .shadow-lg,
+  .shadow-md,
+  .shadow-sm,
+  .shadow-xl {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Hover-Effekte entfernen */
+  .hover\:shadow-md,
+  .hover\:shadow-xl,
+  .hover\:translate-y-\[-5px\] {
+    transform: none !important;
+  }
+
+  /* Optimierte Abstände für den Druck */
+  section {
+    padding-top: 20mm;
+    padding-bottom: 15mm;
+  }
+
+  /* Spezielle Anpassungen für die Titelseite */
+  section:first-of-type {
+    height: auto !important;
+    min-height: 0 !important;
+    padding-top: 25mm;
+    padding-bottom: 25mm;
+  }
+
+  /* Links im Druck sichtbar machen */
+  a {
+    text-decoration: underline;
+    color: rgb(var(--foreground-rgb)) !important;
+  }
+
+  /* Optimierte Schriftgrößen für den Druck */
+  h1 {
+    font-size: 22pt !important;
+    line-height: 1.3 !important;
+  }
+
+  h2 {
+    font-size: 16pt !important;
+    line-height: 1.4 !important;
+  }
+
+  h3 {
+    font-size: 13pt !important;
+    line-height: 1.4 !important;
+  }
+
+  p,
+  li,
+  span {
+    font-size: 10.5pt !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Verbesserte Karten-Darstellung */
+  .bg-white,
+  [class*="rounded"],
+  [class*="shadow"] {
+    border: 1px solid #e2e8f0 !important;
+    background-color: white !important;
+  }
+}
+
+/* PDF Export spezifische Stile */
+.pdf-container {
+  width: 100%;
+  background-color: white;
+  -webkit-font-smoothing: antialiased;
+  font-smooth: always;
+}
+
+/* Kontinuierlicher PDF-Export */
+.pdf-continuous-section {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  page-break-after: auto !important;
+  break-after: auto !important;
+  margin-bottom: 2rem !important;
+}
+
+/* PDF Export Optimierungen */
+.pdf-export-hero {
+  min-height: auto !important;
+  height: auto !important;
+  padding-top: 3rem !important;
+  padding-bottom: 3rem !important;
+}
+
+.pdf-export-section {
+  min-height: auto !important;
+  height: auto !important;
+  padding-top: 2.5rem !important;
+  padding-bottom: 2.5rem !important;
+}
+
+/* Optimierungen für bessere Darstellung im kontinuierlichen Export */
+@media screen {
+  .pdf-export-optimized {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+  }
+
+  .pdf-export-optimized section {
+    margin-bottom: 2rem;
+  }
+
+  .pdf-export-optimized .page-break-after {
+    margin-bottom: 2rem;
+    border-bottom: none;
+  }
+}
+
+/* Spezielle Behandlung für Viewport-basierte Höhen im PDF-Export */
+.pdf-processing {
+  min-height: auto !important;
+  height: auto !important;
+  -webkit-font-smoothing: antialiased;
+  font-smooth: always;
+}
+
+.pdf-processing section {
+  min-height: auto !important;
+  height: auto !important;
+}
+
+.pdf-processing .min-h-screen,
+.pdf-processing .h-screen,
+.pdf-processing [class*="min-h-["],
+.pdf-processing [class*="h-["] {
+  min-height: auto !important;
+  height: auto !important;
+}
+
+/* Verbesserte Textlesbarkeit */
+.pdf-processing p,
+.pdf-processing span,
+.pdf-processing div,
+.pdf-processing h1,
+.pdf-processing h2,
+.pdf-processing h3,
+.pdf-processing h4,
+.pdf-processing h5,
+.pdf-processing h6,
+.pdf-processing li {
+  -webkit-font-smoothing: antialiased;
+  font-smooth: always;
+  text-rendering: optimizeLegibility;
+}
+
+/* Karten-Optimierungen für PDF */
+.pdf-processing .bg-white,
+.pdf-processing [class*="rounded"],
+.pdf-processing [class*="shadow"] {
+  border: 1px solid #e2e8f0;
+  background-color: white;
+}
