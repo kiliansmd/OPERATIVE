@@ -79,7 +79,12 @@ export async function GET(req: Request) {
     const target = new URL(path, urlBase).toString()
 
     const isServerless =
-      process.env.VERCEL === "1" || !!process.env.AWS_REGION || !!process.env.LAMBDA_TASK_ROOT
+      process.env.NODE_ENV === "production" ||
+      process.env.VERCEL === "1" ||
+      !!process.env.AWS_REGION ||
+      !!process.env.LAMBDA_TASK_ROOT ||
+      !!process.env.RAILWAY_ENVIRONMENT ||
+      !!process.env.RAILWAY_PROJECT_ID
 
     const browser = await launchBrowser(isServerless)
     const page = await browser.newPage()
