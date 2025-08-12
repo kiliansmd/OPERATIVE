@@ -14,24 +14,16 @@ function getBaseUrl(req: Request): string {
 }
 
 async function launchBrowser(isServerless: boolean) {
-  if (isServerless) {
-    return puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-    })
-  }
-
-  // 1) Versuche installierten Chrome-Kanal
+  // 1) Bevorzugt systemweiten Chrome/Chromium nutzen (auch in Railway Production vorhanden)
   try {
     return await puppeteer.launch({ channel: "chrome", headless: true })
   } catch {}
+  // channel: "chromium" ist in Typen ggf. nicht erfasst; probiere expliziten Pfad stattdessen
   try {
-    return await puppeteer.launch({ channel: "chromium", headless: true })
+    return await puppeteer.launch({ executablePath: "/usr/bin/chromium", headless: true })
   } catch {}
 
-  // 2) Versuche bekannte Pfade (macOS/Linux)
+  // 2) Bekannte Pfade (macOS/Linux)
   const candidates = [
     process.env.PUPPETEER_EXECUTABLE_PATH,
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -48,8 +40,18 @@ async function launchBrowser(isServerless: boolean) {
     } catch {}
   }
 
+  // 3) Fallback: Sparticuz-Chromium für echte Serverless-Umgebungen (z. B. Vercel/AWS)
+  if (isServerless) {
+    return puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    })
+  }
+
   throw new Error(
-    "Kein lokales Chrome gefunden. Installiere Chrome oder setze PUPPETEER_EXECUTABLE_PATH."
+    "Kein Chrome/Chromium gefunden. Installiere Chrome oder setze PUPPETEER_EXECUTABLE_PATH."
   )
 }
 
@@ -61,13 +63,7 @@ export async function GET(req: Request) {
     const target = new URL(path, urlBase).toString()
 
     const isServerless =
-      process.env.NODE_ENV === "production" ||
-      process.env.VERCEL === "1" ||
-      !!process.env.AWS_REGION ||
-      !!process.env.LAMBDA_TASK_ROOT ||
-      !!process.env.RAILWAY_STATIC_URL ||
-      !!process.env.RAILWAY_ENVIRONMENT ||
-      !!process.env.RAILWAY_PROJECT_ID
+      process.env.VERCEL === "1" || !!process.env.AWS_REGION || !!process.env.LAMBDA_TASK_ROOT
 
     const browser = await launchBrowser(isServerless)
     const page = await browser.newPage()
